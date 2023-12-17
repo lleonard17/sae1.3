@@ -1,0 +1,55 @@
+#!/bin/bash
+
+sudo groupadd chief
+sudo mkdir /home/sharedFolderForChief
+sudo chown :chief "/home/sharedFolderForChief"
+sudo chmod 770 "/home/sharedFolderForChief"
+echo "sharedFolderForChief is created"
+
+sudo mkdir /home/sharedFolderForAll
+sudo chmod 777 "/home/sharedFolderForAll"
+echo "sharedFolderForAll is created"
+
+
+
+##lire le fichier nanti.csv ligne par ligne
+skeldir="/etc/skel"
+sudo mkdir -p "$skeldir/Téléchargements"
+sudo mkdir -p "$skeldir/Documents"
+sudo mkdir -p "$skeldir/Projets"
+
+while IFS= read -r line; do
+	forename=$(echo "$line" | cut -d ';' -f1)
+	name=$(echo "$line" | cut -d ';' -f2)
+	password=$(echo "$line" | cut -d ';' -f3)
+	department=$(echo "$line" | cut -d ';' -f4)
+
+	department=$(echo "$department" | tr '[:upper:]' '[:lower:]')
+
+	login="${forename:0:1}${name}"
+	login=$(echo "$login" | cut -c1-6)
+        login=$(echo "$login$suffix" | tr '[:upper:]' '[:lower:]')
+
+	suffix=""
+	count=1
+	while id -u "$login$suffix" > /dev/null 2>&1; do
+		suffix=$(printf "%02d" "$count")
+		((count++))
+	done
+
+	password=$(openssl passwd -1 "$password")
+
+	if grep -q "^${department}:" /etc/group; then
+		sudo useradd -m -k /etc/skel -d "/home/$department/$login" -p "$password" "$login"
+		sudo usermod -aG "^$department:/etc/group" "$login"
+	else
+		sudo groupadd "$department"
+		sudo mkdir "/home/$department"
+		sudo chown :"$department" "/home/$department"
+		sudo chmod 770 "/home/$department"
+		sudo useradd -m -k /etc/skel -d "/home/$department/$login" -p "$password" "$login"
+		sudo usermod -aG "^$department:/etc/group" "$login"
+	fi
+	echo "Session utilisateur Créé pour $login dans le département $department."
+
+done < "nanti.csv"

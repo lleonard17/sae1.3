@@ -1,0 +1,18 @@
+#!/bin/bash
+##
+
+sudo mkdir -p "/etc/lightdm/lightdm.conf.d"
+sudo touch "/etc/lightdm/lightdm.conf.d/50-show-manual-login.conf"
+
+sudo echo '[SeatDefaults]'| sudo tee -a '/etc/lightdm/lightdm.conf.d/50-show-manual-login.conf' > /dev/null
+sudo echo 'greeter-show-manual-login=true' | sudo tee -a '/etc/lightdm/lightdm.conf.d/50-show-manual-login.conf' > /dev/null
+sudo echo 'greeter-hide-users=true' | sudo tee -a '/etc/lightdm/lightdm.conf.d/50-show-manual-login.conf' > /dev/null
+
+sudo reboot
+
+
+
+
+
+
+
