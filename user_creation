@@ -24,8 +24,11 @@ while IFS= read -r line; do
 	password=$(echo "$line" | cut -d ';' -f3)
 	department=$(echo "$line" | cut -d ';' -f4)
 
+	login=$(echo "$login" | tr ' ' '\r')
+        department=$(echo "$department" | tr ' ' '\r')
+	login=$(echo "$login" | tr -d '\r')
+        department=$(echo "$department" | tr -d '\r')
 	department=$(echo "$department" | tr '[:upper:]' '[:lower:]')
-
 	login="${forename:0:1}${name}"
 	login=$(echo "$login" | cut -c1-6)
         login=$(echo "$login$suffix" | tr '[:upper:]' '[:lower:]')
@@ -39,16 +42,16 @@ while IFS= read -r line; do
 
 	password=$(openssl passwd -1 "$password")
 
-	if grep -q "^${department}:" /etc/group; then
+	if getent group "$department" > /dev/null; then
 		sudo useradd -m -k /etc/skel -d "/home/$department/$login" -p "$password" "$login"
-		sudo usermod -aG "^$department:/etc/group" "$login"
+		sudo usermod -aG "$department" "$login"
 	else
 		sudo groupadd "$department"
 		sudo mkdir "/home/$department"
 		sudo chown :"$department" "/home/$department"
 		sudo chmod 770 "/home/$department"
 		sudo useradd -m -k /etc/skel -d "/home/$department/$login" -p "$password" "$login"
-		sudo usermod -aG "^$department:/etc/group" "$login"
+		sudo usermod -aG "$department" "$login"
 	fi
 	echo "Session utilisateur Créé pour $login dans le département $department."
 
